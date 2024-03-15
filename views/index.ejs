@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to PennyWise</title>
+    <link rel="stylesheet" href="/styles/index.css">
+</head>
+<body>
+    <header>PennyWise</header>
+    <div class="content">
+        <div class="opertn">
+            <p class="txt1">Transactions</p>
+            <input type="number" name="amt" id="amt" required />
+            <label for="amt">Enter Amount</label>
+            <div class="buttons">
+                <button class="in">Income</button>
+                <button class="out">Expense</button>
+            </div>
+        </div>
+        <div class="opertn">
+            <p class="txt1">Transaction Log</p>
+            <ul>
+              <% expenses.forEach((expense) => { %>
+                <li><%= expense.description %>  <%= expense.amount %> @ <%= expense.date %></li>
+              <% }); %>
+            </ul>
+        </div>
+    </div>
+</body>
+<script>
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const expenseButton = document.querySelector('.out');
+    const incomeButton = document.querySelector('.in');
+    const amountInput = document.querySelector('#amt');
+
+    expenseButton.addEventListener('click', () => {
+      const amount = amountInput.value;
+      saveTransaction(amount, 'expenses', 'Expense')
+      .then(() => fetchAndRenderTransactions());
+    });
+  
+
+    incomeButton.addEventListener('click', () => {
+      const amount = amountInput.value;
+      saveTransaction(amount, 'incomes')
+      .then(() => fetchAndRenderTransactions());
+    });
+  
+  });
+  function saveTransaction(amount, type, description) {
+  return fetch(`/api/${type}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ amount: Number(amount), description }), 
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+    return data; 
+  })
+  .catch(error => console.error('Error:', error));
+}
+
+  function fetchTransactions() {
+    fetch('/api/transactions')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+
+      const transactionLog = document.querySelector('.opertn ul');
+      const currentBalance = document.querySelector('.opertn .txt1');
+
+      transactionLog.innerHTML = '';
+      data.forEach((transaction) => {
+        transactionLog.innerHTML += `<li>Rs ${transaction.amount} @ ${transaction.date} for ${transaction.description}</li>`;
+      });
+
+      const latestTransaction = data[data.length - 1];
+      if (latestTransaction) {
+        currentBalance.textContent = `Current Balance: ${latestTransaction.balance}`;
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  }
+  function fetchAndRenderTransactions() {
+    fetchTransactions();
+  }
+  fetchTransactions();
+  </script>
+</html>
